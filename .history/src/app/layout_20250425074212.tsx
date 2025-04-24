@@ -1,6 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter, Outfit } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import Sidebar from '@/components/display/sidebar';
 import Header from '@/components/display/header';
 
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={outfit.className}>
+    <html lang="ja" className={inter.className}>
       <body className="flex">
         <div className="w-[200px] transition-all duration-300">
           <Sidebar />

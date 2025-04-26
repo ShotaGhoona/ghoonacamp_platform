@@ -1,0 +1,39 @@
+import { prisma } from '@/lib/prisma';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { User } from '@prisma/client';
+
+export async function getUser(): Promise<User | null> {
+  const { userId } = auth();
+  
+  if (!userId) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      clerk_id: userId,
+    },
+  });
+
+  if (!user) {
+    const clerkUser = await currentUser();
+    if (!clerkUser) {
+      return null;
+    }
+
+    // 新規ユーザーの場合、Clerkから取得したデータを保存
+    return await prisma.user.create({
+      data: {
+        clerkId: userId,
+        email: clerkUser.emailAddresses[0]?.emailAddress || '',
+        firstName: clerkUser.firstName,
+        lastName: clerkUser.lastName,
+        imageUrl: clerkUser.imageUrl,
+        role: 'USER',
+        status: 'ACTIVE',
+      },
+    });
+  }
+
+  return user;
+}

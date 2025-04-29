@@ -28,42 +28,66 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   lastLoginAt   DateTime? @map("last_login_at") @db.Timestamptz
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz
+  currentTierId Int?      @map("current_tier_id")
 
   // リレーション
-  weeklyGoals      WeeklyGoal[]
-  userMemos        UserMemo[]
-  attendanceLogs   AttendanceLog[]
-  hostedMorningEvents MorningEvent[]
+  profile                    UserProfile?
+  weeklyGoals                WeeklyGoal[]
+  userMemos                  UserMemo[]
+  attendanceLogs             AttendanceLog[]
+  hostedMorningEvents        MorningEvent[]
   morningEventParticipations MorningEventParticipant[]
-  hostedExternalEvents ExternalEvent[]
-  rivals           UserRival[]         @relation("UserRivals")
-  rivaledBy        UserRival[]         @relation("RivaledByUsers")
-  currentTier      Tier?               @relation("UserCurrentTier", fields: [currentTierId], references: [id])
-  currentTierId    Int?
+  hostedExternalEvents       ExternalEvent[]
+  rivals                     UserRival[]               @relation("UserRivals")
+  rivaledBy                  UserRival[]               @relation("RivaledByUsers")
+  currentTier                Tier?                     @relation("UserCurrentTier", fields: [currentTierId], references: [id])
 
   @@map("users")
 }
 
+// プロフィール情報
+model UserProfile {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @unique @map("user_id") @db.Uuid
+  username     String   @db.VarChar(50)
+  bio          String?  @db.VarChar(160)
+  oneLine      String?  @map("one_line") @db.VarChar(100)
+  background   String?  @db.Text
+  interests    String[] @db.VarChar(50)
+  coreSkills   String[] @map("core_skills") @db.VarChar(50)
+  websiteUrl   String?  @map("website_url") @db.Text
+  xUrl         String?  @map("x_url") @db.Text
+  instagramUrl String?  @map("instagram_url") @db.Text
+  linkedinUrl  String?  @map("linkedin_url") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  // リレーション
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
 model Tier {
-  id           Int      @id @default(autoincrement())
-  level        Int      @db.SmallInt
-  minDays      Int      @map("min_days")
-  maxDays      Int?     @map("max_days")
-  titleEn      String   @map("title_en") @db.VarChar(40)
-  titleJa      String   @map("title_ja") @db.VarChar(40)
-  badgeColor   String   @map("badge_color") @db.VarChar(10)
-  cardImageUrl String   @map("card_image_url") @db.Text
-  users        User[]   @relation("UserCurrentTier")
+  id           Int    @id @default(autoincrement())
+  level        Int    @db.SmallInt
+  minDays      Int    @map("min_days")
+  maxDays      Int?   @map("max_days")
+  titleEn      String @map("title_en") @db.VarChar(40)
+  titleJa      String @map("title_ja") @db.VarChar(40)
+  badgeColor   String @map("badge_color") @db.VarChar(10)
+  cardImageUrl String @map("card_image_url") @db.Text
+  users        User[] @relation("UserCurrentTier")
 
   @@map("tiers")
 }
 
 model UserRival {
-  userId       String   @map("user_id") @db.Uuid
-  rivalUserId  String   @map("rival_user_id") @db.Uuid
-  setAt        DateTime @default(now()) @map("set_at") @db.Timestamptz
-  user         User     @relation("UserRivals", fields: [userId], references: [id], onDelete: Cascade)
-  rivalUser    User     @relation("RivaledByUsers", fields: [rivalUserId], references: [id], onDelete: Cascade)
+  userId      String   @map("user_id") @db.Uuid
+  rivalUserId String   @map("rival_user_id") @db.Uuid
+  setAt       DateTime @default(now()) @map("set_at") @db.Timestamptz
+  user        User     @relation("UserRivals", fields: [userId], references: [id], onDelete: Cascade)
+  rivalUser   User     @relation("RivaledByUsers", fields: [rivalUserId], references: [id], onDelete: Cascade)
 
   @@id([userId, rivalUserId])
   @@map("user_rivals")
@@ -83,10 +107,10 @@ model WeeklyGoal {
 }
 
 model UserMemo {
-  id        Int      @id @default(autoincrement())
-  userId    String   @map("user_id") @db.Uuid
-  body      String   @db.Text
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     Int    @id @default(autoincrement())
+  userId String @map("user_id") @db.Uuid
+  body   String @db.Text
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_memos")
 }
@@ -106,19 +130,19 @@ model AttendanceLog {
 
 // 朝活イベント関連
 model MorningEvent {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(80)
-  description String   @db.Text
-  hostUserId  String   @map("host_user_id") @db.Uuid
-  startAt     DateTime @map("start_at") @db.Timestamptz
-  endAt       DateTime @map("end_at") @db.Timestamptz
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(80)
+  description String    @db.Text
+  hostUserId  String    @map("host_user_id") @db.Uuid
+  startAt     DateTime  @map("start_at") @db.Timestamptz
+  endAt       DateTime  @map("end_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
-  
-  hostUser    User     @relation(fields: [hostUserId], references: [id])
+
+  hostUser     User                      @relation(fields: [hostUserId], references: [id])
   participants MorningEventParticipant[]
-  tags        MorningEventOnTag[]
+  tags         MorningEventOnTag[]
 
   @@map("morning_events")
 }
@@ -128,32 +152,32 @@ model MorningEventParticipant {
   userId     String    @map("user_id") @db.Uuid
   joinedAt   DateTime  @default(now()) @map("joined_at") @db.Timestamptz
   canceledAt DateTime? @map("canceled_at") @db.Timestamptz
-  
-  event      MorningEvent @relation(fields: [eventId], references: [id])
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  event MorningEvent @relation(fields: [eventId], references: [id])
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([eventId, userId])
   @@map("morning_event_participants")
 }
 
 model MorningEventTag {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique @db.VarChar(40)
-  color     String   @db.VarChar(10)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(40)
+  color     String    @db.VarChar(10)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
-  
-  events    MorningEventOnTag[]
+
+  events MorningEventOnTag[]
 
   @@map("morning_event_tags")
 }
 
 model MorningEventOnTag {
-  eventId   Int      @map("event_id")
-  tagId     Int      @map("tag_id")
-  event     MorningEvent    @relation(fields: [eventId], references: [id])
-  tag       MorningEventTag @relation(fields: [tagId], references: [id])
+  eventId Int             @map("event_id")
+  tagId   Int             @map("tag_id")
+  event   MorningEvent    @relation(fields: [eventId], references: [id])
+  tag     MorningEventTag @relation(fields: [tagId], references: [id])
 
   @@id([eventId, tagId])
   @@map("morning_event_on_tags")
@@ -161,41 +185,41 @@ model MorningEventOnTag {
 
 // 外部イベント関連
 model ExternalEvent {
-  id          Int      @id @default(autoincrement())
-  title       String   @db.VarChar(120)
-  description String   @db.Text
-  imageUrl    String?  @map("image_url") @db.Text
-  hostUserId  String   @map("host_user_id") @db.Uuid
-  startAt     DateTime @map("start_at") @db.Timestamptz
-  endAt       DateTime @map("end_at") @db.Timestamptz
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(120)
+  description String    @db.Text
+  imageUrl    String?   @map("image_url") @db.Text
+  hostUserId  String    @map("host_user_id") @db.Uuid
+  startAt     DateTime  @map("start_at") @db.Timestamptz
+  endAt       DateTime  @map("end_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
-  
-  hostUser    User     @relation(fields: [hostUserId], references: [id])
-  tags        ExternalEventOnTag[]
+
+  hostUser User                 @relation(fields: [hostUserId], references: [id])
+  tags     ExternalEventOnTag[]
 
   @@map("external_events")
 }
 
 model ExternalEventTag {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique @db.VarChar(40)
-  color     String   @db.VarChar(10)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(40)
+  color     String    @db.VarChar(10)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
-  
-  events    ExternalEventOnTag[]
+
+  events ExternalEventOnTag[]
 
   @@map("external_event_tags")
 }
 
 model ExternalEventOnTag {
-  eventId   Int      @map("event_id")
-  tagId     Int      @map("tag_id")
-  event     ExternalEvent    @relation(fields: [eventId], references: [id])
-  tag       ExternalEventTag @relation(fields: [tagId], references: [id])
+  eventId Int              @map("event_id")
+  tagId   Int              @map("tag_id")
+  event   ExternalEvent    @relation(fields: [eventId], references: [id])
+  tag     ExternalEventTag @relation(fields: [tagId], references: [id])
 
   @@id([eventId, tagId])
   @@map("external_event_on_tags")
@@ -203,52 +227,53 @@ model ExternalEventOnTag {
 
 // システムお知らせ関連
 model SystemNotice {
-  id              Int      @id @default(autoincrement())
-  title           String   @db.VarChar(120)
-  content         String   @db.Text
-  imageUrl        String?  @map("image_url") @db.Text
-  isPublic        Boolean  @default(true) @map("is_public")
-  publishStartAt  DateTime @default(now()) @map("publish_start_at") @db.Timestamptz
-  publishEndAt    DateTime @default(dbgenerated("NOW() + INTERVAL '1 year'")) @map("publish_end_at") @db.Timestamptz
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz
-  
-  tags            SystemNoticeOnTag[]
+  id             Int       @id @default(autoincrement())
+  title          String    @db.VarChar(120)
+  content        String    @db.Text
+  imageUrl       String?   @map("image_url") @db.Text
+  isPublic       Boolean   @default(true) @map("is_public")
+  publishStartAt DateTime  @default(now()) @map("publish_start_at") @db.Timestamptz
+  publishEndAt   DateTime  @default(dbgenerated("NOW() + INTERVAL '1 year'")) @map("publish_end_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz
+
+  tags SystemNoticeOnTag[]
 
   @@map("system_notices")
 }
 
 model SystemNoticeTag {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique @db.VarChar(40)
-  color     String   @db.VarChar(10)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(40)
+  color     String    @db.VarChar(10)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz
-  
-  notices   SystemNoticeOnTag[]
+
+  notices SystemNoticeOnTag[]
 
   @@map("system_notice_tags")
 }
 
 model SystemNoticeOnTag {
-  noticeId  Int      @map("notice_id")
-  tagId     Int      @map("tag_id")
-  notice    SystemNotice    @relation(fields: [noticeId], references: [id])
-  tag       SystemNoticeTag @relation(fields: [tagId], references: [id])
+  noticeId Int             @map("notice_id")
+  tagId    Int             @map("tag_id")
+  notice   SystemNotice    @relation(fields: [noticeId], references: [id])
+  tag      SystemNoticeTag @relation(fields: [tagId], references: [id])
 
   @@id([noticeId, tagId])
   @@map("system_notice_on_tags")
 }
 
 model UserDailyStats {
-  userId        String   @db.Uuid
-  statDate      DateTime @db.Date      // 0:00固定
-  totalPresent  Int
-  monthPresent  Int
-  weekPresent   Int
-  streak        Int
+  userId       String   @db.Uuid
+  statDate     DateTime @db.Date // 0:00固定
+  totalPresent Int
+  monthPresent Int
+  weekPresent  Int
+  streak       Int
+
   @@id([userId, statDate])
   @@index([statDate])
   @@map("user_daily_stats")
